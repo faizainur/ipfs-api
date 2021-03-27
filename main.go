@@ -14,16 +14,23 @@ func main() {
 	app.Use(logger.New())
 	app.Use(middleware)
 
-	IpfsMiddleware := middlewares.IpfsMiddleware{
-		&ipfs.IPFSClient{
+	ipfsMiddleware := middlewares.IpfsMiddleware{
+		IpfsClient: &ipfs.IPFSClient{
 			ApiServerUri:     "http://127.0.0.1:5001/api/v0/",
-			GatewayServerUri: "http://localhost:7000/ipfs/",
+			GatewayServerUri: "http://127.0.0.1:7000/ipfs/",
 		},
 	}
 
-	app.Get("/ping", ping)
-	app.Post("/upload", IpfsMiddleware.UploadFile)
-	app.Post("/upload2", Upload)
+	v1 := app.Group("/v1")
+	{
+		v1.Get("/ping", ping)
+
+		ipfs := v1.Group("/ipfs")
+		{
+			ipfs.Get("/fetch", ipfsMiddleware.FetchFile)
+			ipfs.Post("/upload", ipfsMiddleware.FetchFile)
+		}
+	}
 
 	app.Listen(":4000")
 }

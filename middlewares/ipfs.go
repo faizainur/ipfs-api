@@ -37,3 +37,13 @@ func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func (f *IpfsMiddleware) FetchFile(c *fiber.Ctx) error {
+	cid := c.Query("cid")
+
+	data, err := f.IpfsClient.FetchFile(cid)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	return c.Status(fiber.StatusOK).Send(data)
+}
