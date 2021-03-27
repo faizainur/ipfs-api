@@ -19,8 +19,15 @@ type ipfsUploadResponse struct {
 }
 
 type IPFSClient struct {
-	ApiServerUri     string
-	GatewayServerUri string
+	apiServerUri     string
+	gatewayServerUri string
+}
+
+func NewClient(apiServerUri string, gatewayServerUri string) *IPFSClient {
+	return &IPFSClient{
+		apiServerUri:     apiServerUri,
+		gatewayServerUri: gatewayServerUri,
+	}
 }
 
 func (f *IPFSClient) FetchFile(cid string) ([]byte, error) {
@@ -90,7 +97,7 @@ func (f *IPFSClient) UploadFile(filename string, data []byte) (ipfsUploadRespons
 func (f *IPFSClient) formFetchUri(cid string) string {
 	var builder strings.Builder
 
-	builder.WriteString(f.GatewayServerUri)
+	builder.WriteString(f.gatewayServerUri)
 	builder.WriteString(cid)
 
 	return builder.String()
@@ -99,7 +106,7 @@ func (f *IPFSClient) formFetchUri(cid string) string {
 func (f *IPFSClient) formApiIpfsUri(endpoint string, queryString map[string]string) string {
 	var builder strings.Builder
 
-	builder.WriteString(f.ApiServerUri)
+	builder.WriteString(f.apiServerUri)
 	builder.WriteString(endpoint)
 
 	if queryString != nil {

@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	ipfs "github.com/faizainur/ipfs-api/ipfs_client"
+	"github.com/faizainur/ipfs-api/services"
 	"github.com/gofiber/fiber/v2"
 )
 
 type IpfsMiddleware struct {
-	IpfsClient *ipfs.IPFSClient
+	IpfsClient    *ipfs.IPFSClient
+	CryptoService *services.CryptoService
 }
 
 func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
@@ -30,7 +32,9 @@ func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
 		dataBuffer.ReadFrom(fh)
 	}
 
-	resp, errUpload := f.IpfsClient.UploadFile(filename, dataBuffer.Bytes())
+	encryptedFile := f.CryptoService.AESEncrypt(dataBuffer.Bytes())
+
+	resp, errUpload := f.IpfsClient.UploadFile(filename, encryptedFile)
 	if errUpload != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(fmt.Sprintf("%s: %s", "Error", errUpload.Error()))
 	}
@@ -45,5 +49,6 @@ func (f *IpfsMiddleware) FetchFile(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
-	return c.Status(fiber.StatusOK).Send(data)
+	decryptedFile := f.CryptoService.AESDecrypt(data)
+	return c.Status(fiber.StatusOK).Send(decryptedFile)
 }

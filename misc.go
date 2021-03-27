@@ -11,7 +11,6 @@ import (
 	"os"
 	"strconv"
 
-	ipfs "github.com/faizainur/ipfs-api/ipfs_client"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,10 +27,10 @@ type ipfsResponse struct {
 	Size string `json:"size,omitempty"  bson:"size"  form:"size"  binding:"size"`
 }
 
-var client = ipfs.IPFSClient{
-	ApiServerUri:     "http://localhost:5001/api/v0/",
-	GatewayServerUri: "http://localhost:7000/ipfs/",
-}
+// var client = ipfs.IPFSClient{
+// 	ApiServerUri:     "http://localhost:5001/api/v0/",
+// 	GatewayServerUri: "http://localhost:7000/ipfs/",
+// }
 
 func Upload(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
