@@ -18,6 +18,7 @@ func main() {
 	app.Use(middleware)
 
 	cryptoService := services.NewCryptoService(loadKey())
+	authService := services.NewAuthService("http://localhost:8000/v1/auth/validate_token", "localhost:9001")
 	ipfsClient := ipfs.NewClient("http://127.0.0.1:5001/api/v0/", "http://127.0.0.1:7000/ipfs/")
 
 	ipfsMiddleware := middlewares.IpfsMiddleware{
@@ -25,9 +26,15 @@ func main() {
 		CryptoService: cryptoService,
 	}
 
+	authMiddleware := middlewares.AuthMiddleware{
+		AuthService: authService,
+	}
+
 	v1 := app.Group("/v1")
 	{
 		v1.Get("/ping", ping)
+		v1.Get("/secure", authMiddleware.ValidateJwtToken, securedEndpoint)
+		v1.Get("/secureOauth", authMiddleware.IntrospectOauth2Token, securedEndpoint)
 
 		ipfs := v1.Group("/ipfs")
 		{
@@ -52,5 +59,12 @@ func ping(c *fiber.Ctx) error {
 		"code":    200,
 		"status":  "server is running",
 		"message": c.Locals("vals"),
+	})
+}
+
+func securedEndpoint(c *fiber.Ctx) error {
+	return c.Status(200).JSON(fiber.Map{
+		"email": c.Locals("email"),
+		// "user_uid": c.Locals("userUid"),
 	})
 }
