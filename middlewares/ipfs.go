@@ -15,6 +15,7 @@ type IpfsMiddleware struct {
 }
 
 func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
+	email := c.Locals("email").(string)
 	form, err := c.MultipartForm()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
@@ -32,7 +33,10 @@ func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
 		dataBuffer.ReadFrom(fh)
 	}
 
-	encryptedFile := f.CryptoService.AESEncrypt(dataBuffer.Bytes())
+	encryptedFile, err := f.CryptoService.EncryptUserFile(email, dataBuffer.Bytes())
+	if err != nil {
+		c.SendString(err.Error())
+	}
 
 	resp, errUpload := f.IpfsClient.UploadFile(filename, encryptedFile)
 	if errUpload != nil {
@@ -43,12 +47,13 @@ func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
 }
 
 func (f *IpfsMiddleware) FetchFile(c *fiber.Ctx) error {
+	email := c.Locals("email").(string)
 	cid := c.Query("cid")
 
 	data, err := f.IpfsClient.FetchFile(cid)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
-	decryptedFile := f.CryptoService.AESDecrypt(data)
+	decryptedFile := f.CryptoService.DecryptUserFile(email, data)
 	return c.Status(fiber.StatusOK).Send(decryptedFile)
 }

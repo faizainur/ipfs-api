@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/hex"
 	"io/ioutil"
 
+	"github.com/faizainur/ipfs-api/cutils"
 	ipfs "github.com/faizainur/ipfs-api/ipfs_client"
 	"github.com/faizainur/ipfs-api/middlewares"
 	"github.com/faizainur/ipfs-api/services"
@@ -16,6 +18,8 @@ func main() {
 	app.Use(cors.New())
 	app.Use(logger.New())
 	app.Use(middleware)
+
+	// cutils.GenerateKeyFile()
 
 	cryptoService := services.NewCryptoService(loadKey())
 	authService := services.NewAuthService("http://localhost:8000/v1/auth/validate_token", "localhost:9001")
@@ -38,8 +42,8 @@ func main() {
 
 		ipfs := v1.Group("/ipfs")
 		{
-			ipfs.Get("/fetch", ipfsMiddleware.FetchFile)
-			ipfs.Post("/upload", ipfsMiddleware.UploadFile)
+			ipfs.Get("/fetch", authMiddleware.ValidateJwtToken, ipfsMiddleware.FetchFile)
+			ipfs.Post("/upload", authMiddleware.ValidateJwtToken, ipfsMiddleware.UploadFile)
 		}
 	}
 
@@ -47,10 +51,12 @@ func main() {
 }
 
 func loadKey() []byte {
-	key, err := ioutil.ReadFile("secret.key")
+	key := make([]byte, 24)
+	encodedKey, err := ioutil.ReadFile(cutils.GetKeyPath())
 	if err != nil {
-		panic(err)
+		return cutils.GenerateKeyFile()
 	}
+	hex.Decode(key, encodedKey)
 	return key
 }
 

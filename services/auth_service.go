@@ -81,7 +81,6 @@ func (a *AuthService) ValidateJwt(token string) (bool, JwtTokenValidationData, e
 	}
 
 	err := json.Unmarshal(resp.Body(), &jsonResponse)
-	fmt.Println(jsonResponse)
 	if err != nil {
 		fmt.Println("Error json response ")
 
