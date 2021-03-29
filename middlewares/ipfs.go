@@ -3,9 +3,11 @@ package middlewares
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	ipfs "github.com/faizainur/ipfs-api/ipfs_client"
 	"github.com/faizainur/ipfs-api/services"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -55,5 +57,11 @@ func (f *IpfsMiddleware) FetchFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 	decryptedFile := f.CryptoService.DecryptUserFile(email, data)
+	typeFile := mimetype.Detect(decryptedFile)
+
+	fileName := fmt.Sprintf("%d%s", time.Now().Unix(), typeFile.Extension())
+	c.Attachment(fileName)
+	// c.Set("Content-Disposition", "inline")
+	c.Set("Content-Type", typeFile.String())
 	return c.Status(fiber.StatusOK).Send(decryptedFile)
 }
