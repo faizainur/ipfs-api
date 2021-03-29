@@ -34,19 +34,19 @@ func (a *AuthMiddleware) ValidateJwtToken(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (a *AuthMiddleware) IntrospectOauth2Token(c *fiber.Ctx) error {
+func (a *AuthMiddleware) IntrospectAccessToken(c *fiber.Ctx) error {
 	authHeader := strings.Trim(c.Get("Authorization"), " ")
 	if len(authHeader) < 2 {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"code":  fiber.StatusUnauthorized,
-			"error": "No JWT token provided",
+			"error": "No access token provided",
 		})
 	}
 
 	accessToken := strings.Split(authHeader, " ")[1]
 	isActive, data, err := a.AuthService.IntrospectTokenOauth2(accessToken)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("err.Error()")
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	if !isActive {
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized Access")

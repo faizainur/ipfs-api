@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/faizainur/ipfs-api/cutils"
@@ -37,25 +38,42 @@ func main() {
 	v1 := app.Group("/v1")
 	{
 		v1.Get("/ping", ping)
-		v1.Get("/secure", authMiddleware.ValidateJwtToken, securedEndpoint)
-		v1.Get("/secureOauth", authMiddleware.IntrospectOauth2Token, securedEndpoint)
 
-		ipfs := v1.Group("/ipfs")
+		// Testing endpoint
+		v1.Get("/secure", authMiddleware.ValidateJwtToken, securedEndpoint)
+		v1.Get("/secureOauth", authMiddleware.IntrospectAccessToken, securedEndpoint)
+
+		user := v1.Group("/user")
 		{
-			ipfs.Get("/fetch", authMiddleware.ValidateJwtToken, ipfsMiddleware.FetchFile)
-			ipfs.Post("/upload", authMiddleware.ValidateJwtToken, ipfsMiddleware.UploadFile)
+			user.Get("/fetch", authMiddleware.ValidateJwtToken, ipfsMiddleware.FetchFile)
+			user.Post("/upload", authMiddleware.ValidateJwtToken, ipfsMiddleware.UploadFile)
 		}
+
+		bank := v1.Group("/bank")
+		{
+			bank.Get("/fetch", authMiddleware.IntrospectAccessToken, ipfsMiddleware.FetchFile)
+		}
+
 	}
 
 	app.Listen(":4000")
 }
 
 func loadKey() []byte {
+	fmt.Println("Loading key...")
+
 	key := make([]byte, 24)
 	encodedKey, err := ioutil.ReadFile(cutils.GetKeyPath())
 	if err != nil {
-		return cutils.GenerateKeyFile()
+		// Key is not found
+		fmt.Println("Cannot find master key")
+		// Generating new key file
+		fmt.Println("Generating new master key file...")
+		key = cutils.GenerateKeyFile()
+		fmt.Println("Key is generated and stored in ", cutils.GetKeyDirPath())
+		return key
 	}
+	fmt.Println("Key found, using this key as m master key")
 	hex.Decode(key, encodedKey)
 	return key
 }
@@ -71,6 +89,5 @@ func ping(c *fiber.Ctx) error {
 func securedEndpoint(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{
 		"email": c.Locals("email"),
-		// "user_uid": c.Locals("userUid"),
 	})
 }
