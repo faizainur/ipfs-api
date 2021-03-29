@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/faizainur/ipfs-api/cutils"
 	ipfs "github.com/faizainur/ipfs-api/ipfs_client"
@@ -23,8 +24,8 @@ func main() {
 	// cutils.GenerateKeyFile()
 
 	cryptoService := services.NewCryptoService(loadKey())
-	authService := services.NewAuthService("http://localhost:8000/v1/auth/validate_token", "localhost:9001")
-	ipfsClient := ipfs.NewClient("http://127.0.0.1:5001/api/v0/", "http://127.0.0.1:7000/ipfs/")
+	authService := services.NewAuthService(os.Getenv("JWT_VALIDATION_URI"), os.Getenv("ADMIN_HYDRA_HOST"))
+	ipfsClient := ipfs.NewClient(os.Getenv("IPFS_API_SERVER_URI"), os.Getenv("IPFS_GATEWAY_URI"))
 
 	ipfsMiddleware := middlewares.IpfsMiddleware{
 		IpfsClient:    ipfsClient,
