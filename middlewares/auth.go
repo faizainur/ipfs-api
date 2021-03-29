@@ -23,7 +23,7 @@ func (a *AuthMiddleware) ValidateJwtToken(c *fiber.Ctx) error {
 	authToken := strings.Split(authHeader, " ")[1]
 	isValid, data, err := a.AuthService.ValidateJwt(authToken)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("err.Error()")
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
 	if !isValid {

@@ -23,9 +23,19 @@ func main() {
 
 	// cutils.GenerateKeyFile()
 
+	jwtUri := os.Getenv("JWT_VALIDATION_URI")
+	adminHydraHost := os.Getenv("ADMIN_HYDRA_HOST")
+	ipfsApiServer := os.Getenv("IPFS_API_SERVER_URI")
+	ipfsGateway := os.Getenv("IPFS_GATEWAY_URI")
+
+	fmt.Println("JWT VALIDATION URI = ", jwtUri)
+	fmt.Println("ADMIN HYDRA HOST = ", adminHydraHost)
+	fmt.Println("IPFS API SERVER = ", ipfsApiServer)
+	fmt.Println("IPFS GATEWAY = ", ipfsGateway)
+
 	cryptoService := services.NewCryptoService(loadKey())
-	authService := services.NewAuthService(os.Getenv("JWT_VALIDATION_URI"), os.Getenv("ADMIN_HYDRA_HOST"))
-	ipfsClient := ipfs.NewClient(os.Getenv("IPFS_API_SERVER_URI"), os.Getenv("IPFS_GATEWAY_URI"))
+	authService := services.NewAuthService(jwtUri, adminHydraHost)
+	ipfsClient := ipfs.NewClient(ipfsApiServer, ipfsGateway)
 
 	ipfsMiddleware := middlewares.IpfsMiddleware{
 		IpfsClient:    ipfsClient,
