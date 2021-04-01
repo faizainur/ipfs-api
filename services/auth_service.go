@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"os"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/gofiber/fiber/v2"
-	hydraClient "github.com/ory/hydra-client-go/client"
+	"github.com/ory/hydra-client-go/client"
 	"github.com/ory/hydra-client-go/client/admin"
 	"github.com/ory/hydra-client-go/models"
 )
@@ -31,19 +33,44 @@ type AuthService struct {
 	hydraAdmin       admin.ClientService
 }
 
-func NewAuthService(jwtValidationUri string, hydraHost string) *AuthService {
-	skipTlsClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-		Timeout: 10 * time.Second,
+func NewAuthService(jwtValidationUri string, hydraAdminHost string) *AuthService {
+	var (
+		hydraAdmin            *client.OryHydra
+		enableTlsVerification string
+	)
+
+	// Get ENABLE_TLS_VERIFICATION environment variable
+	enableTlsVerification = os.Getenv("ENABLE_TLS_VERIFICATION")
+
+	// If environment variable is not set
+	if enableTlsVerification == "" {
+		// Set default value "0"
+		// Default : Disable TLS verification
+		enableTlsVerification = "0"
 	}
-	transport := httptransport.NewWithClient(hydraHost, "/", []string{"https"}, skipTlsClient)
-	hydra := hydraClient.New(transport, nil)
+
+	if enableTlsVerification == "0" {
+		skipTlsClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			Timeout: 10 * time.Second,
+		}
+		transport := httptransport.NewWithClient(hydraAdminHost, "/", []string{"https"}, skipTlsClient)
+		hydraAdmin = client.New(transport, nil)
+
+	} else if enableTlsVerification == "1" {
+		adminUrl, _ := url.Parse(hydraAdminHost)
+		hydraAdmin = client.NewHTTPClientWithConfig(nil, &client.TransportConfig{
+			Schemes:  []string{adminUrl.Scheme},
+			Host:     adminUrl.Host,
+			BasePath: adminUrl.Path,
+		})
+	}
 
 	return &AuthService{
 		jwtValidationUri: jwtValidationUri,
-		hydraAdmin:       hydra.Admin,
+		hydraAdmin:       hydraAdmin.Admin,
 	}
 }
 
