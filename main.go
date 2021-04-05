@@ -44,7 +44,7 @@ func main() {
 		AuthService: authService,
 	}
 
-	v1 := app.Group("/v1")
+	v1 := app.Group("/api/v1/ipfs")
 	{
 		v1.Get("/ping", ping)
 
@@ -96,8 +96,8 @@ func loadKey() []byte {
 func ping(c *fiber.Ctx) error {
 	return c.JSON(map[string]interface{}{
 		"code":    200,
-		"status":  "server is running",
-		"message": c.Locals("vals"),
+		"status":  "running",
+		"message": "IPFS API is running",
 	})
 }
 
