@@ -17,22 +17,32 @@ import (
 	"github.com/ory/hydra-client-go/models"
 )
 
+// JwtTokenValidatoinData is a model represent the user data
+// Consists of email address and User UID
+// Used for a return object after an authentication mechanism
 type JwtTokenValidationData struct {
 	Email   string `json:"email,omitempty"  bson:"email"  form:"email"  binding:"email"`
 	UserUid string `json:"user_uid,omitempty"  bson:"user_uid"  form:"user_uid"  binding:"user_uid"`
 }
 
+// JwtTokenValidationesponse
 type JwtTokenValidationResponse struct {
 	Code    int                    `json:"code,omitempty"  bson:"code"  form:"code"  binding:"code"`
 	Data    JwtTokenValidationData `json:"data,omitempty"  bson:"data"  form:"data"  binding:"data"`
 	IsValid bool                   `json:"is_valid,omitempty"  bson:"is_valid"  form:"is_valid"  binding:"is_valid"`
 }
 
+// AuthService represent the object of authentication service
+// It has methods use for performing authentication mechanism
+// Supported mechanism : JWT Validation and Introspect Access Token for Oauth2
 type AuthService struct {
-	jwtValidationUri string
-	hydraAdmin       admin.ClientService
+	jwtValidationUri string              // IDP Endpoin for JWT validation
+	hydraAdmin       admin.ClientService // Hydra Admin Object
 }
 
+// NewAuthService creates and return a new instance of AuthService object
+// Takes jwtValidationUri and hydraAdminHost as parameters required
+// for creating a new instances of AuthService object
 func NewAuthService(jwtValidationUri string, hydraAdminHost string) *AuthService {
 	var (
 		hydraAdmin            *client.OryHydra
@@ -50,16 +60,23 @@ func NewAuthService(jwtValidationUri string, hydraAdminHost string) *AuthService
 	}
 
 	if enableTlsVerification == "0" {
+		// If TLS verification is disabled
+		// create a new HTTP client
+		// Set TLS InsecureSkipVerify to true to skip TLS verification
 		skipTlsClient := &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
-			Timeout: 10 * time.Second,
+			Timeout: 10 * time.Second, // Set HTTP timeout to 10 seconds
 		}
 		transport := httptransport.NewWithClient(hydraAdminHost, "/", []string{"https"}, skipTlsClient)
-		hydraAdmin = client.New(transport, nil)
+		hydraAdmin = client.New(transport, nil) // Create a new hydra admin client
 
 	} else if enableTlsVerification == "1" {
+		// Disclaimer : This feature is in BETA
+		// If TLS verification is enabled
+		// Create a new hydra admin client using the default function
+		// Provided by Ory Hydra package
 		adminUrl, _ := url.Parse(hydraAdminHost)
 		hydraAdmin = client.NewHTTPClientWithConfig(nil, &client.TransportConfig{
 			Schemes:  []string{adminUrl.Scheme},
@@ -74,8 +91,10 @@ func NewAuthService(jwtValidationUri string, hydraAdminHost string) *AuthService
 	}
 }
 
+// ValidateJwt will validate the provided JWT token
+// If a user is authenticated, this function will return
+// the user data consists of user email address and user uid
 func (a *AuthService) ValidateJwt(token string) (bool, JwtTokenValidationData, error) {
-
 	var jsonResponse JwtTokenValidationResponse
 
 	agent := fiber.AcquireAgent()
@@ -87,7 +106,6 @@ func (a *AuthService) ValidateJwt(token string) (bool, JwtTokenValidationData, e
 	}()
 
 	agent.UserAgent("IPFS API Server")
-
 	authToken := fmt.Sprintf("Bearer %s", token)
 
 	req := agent.Request()
@@ -97,32 +115,30 @@ func (a *AuthService) ValidateJwt(token string) (bool, JwtTokenValidationData, e
 
 	if err := agent.Parse(); err != nil {
 		fmt.Println("error parse host client")
-
 		panic(err)
 	}
 
 	if err := agent.HostClient.Do(req, resp); err != nil {
 		fmt.Println("error http ")
-
 		return false, JwtTokenValidationData{}, err
 	}
 
 	err := json.Unmarshal(resp.Body(), &jsonResponse)
 	if err != nil {
 		fmt.Println("Error json response ")
-
 		return false, JwtTokenValidationData{}, nil
 	}
 
 	if !jsonResponse.IsValid {
 		fmt.Println("Not valid ")
-
 		return false, JwtTokenValidationData{}, nil
 	}
-
 	return true, jsonResponse.Data, nil
 }
 
+// IntrospectTokenOauth2 will intraspect the given Oauth2 access token
+// This method will send a request to Introspect Token endpoint
+// In Oauth2 server
 func (a *AuthService) IntrospectTokenOauth2(token string) (bool, *models.OAuth2TokenIntrospection, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

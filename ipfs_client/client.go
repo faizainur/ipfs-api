@@ -18,11 +18,15 @@ type ipfsUploadResponse struct {
 	Size string `json:"size,omitempty"  bson:"size"  form:"size"  binding:"size"`
 }
 
+// IPFSClient represent the object of IFPS client
 type IPFSClient struct {
-	apiServerUri     string
-	gatewayServerUri string
+	apiServerUri     string // IPFS API Server Uri
+	gatewayServerUri string // IPFS HTTP Gateway
 }
 
+// NewClient creates and returns an object of IPFSClient
+// Takes apiServerUri for the URI of IPFS Server
+// And gatewayServerUri for IPFS HTTP Gateway URI
 func NewClient(apiServerUri string, gatewayServerUri string) *IPFSClient {
 	return &IPFSClient{
 		apiServerUri:     apiServerUri,
@@ -30,6 +34,9 @@ func NewClient(apiServerUri string, gatewayServerUri string) *IPFSClient {
 	}
 }
 
+// FetchFile will fetch a file stored in IPFS network
+// Find a file based on the given CID of the file
+// returns the file in bytes
 func (f *IPFSClient) FetchFile(cid string) ([]byte, error) {
 	uri := f.formFetchUri(cid)
 
@@ -58,6 +65,10 @@ func (f *IPFSClient) FetchFile(cid string) ([]byte, error) {
 	return resp.Body(), nil
 }
 
+// UploadFile upload a gile to IPFS network
+// This function takes two parameters, filename in string and file data in bytes
+// File is passed to IPFS API endpoint using HTTP form data
+// return an object of IpfsUploadResponse
 func (f *IPFSClient) UploadFile(filename string, data []byte) (ipfsUploadResponse, error) {
 	var jsonResponse ipfsUploadResponse
 
@@ -88,21 +99,21 @@ func (f *IPFSClient) UploadFile(filename string, data []byte) (ipfsUploadRespons
 	if err := agent.HostClient.Do(req, resp); err != nil {
 		return ipfsUploadResponse{}, err
 	}
-
 	json.Unmarshal(resp.Body(), &jsonResponse)
-
 	return jsonResponse, nil
 }
 
+// formFetchUri will create a Fetch Uri for the given cid
+// return URI as string
 func (f *IPFSClient) formFetchUri(cid string) string {
 	var builder strings.Builder
-
 	builder.WriteString(f.gatewayServerUri)
 	builder.WriteString(cid)
-
 	return builder.String()
 }
 
+// formIpfsUri will create a API IPFS endpoint uri
+// return URI as string
 func (f *IPFSClient) formApiIpfsUri(endpoint string, queryString map[string]string) string {
 	var builder strings.Builder
 
@@ -118,6 +129,5 @@ func (f *IPFSClient) formApiIpfsUri(endpoint string, queryString map[string]stri
 			builder.WriteString("&")
 		}
 	}
-
 	return builder.String()
 }

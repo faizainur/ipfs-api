@@ -21,8 +21,6 @@ func main() {
 	app.Use(logger.New())
 	app.Use(middleware)
 
-	// cutils.GenerateKeyFile()
-
 	jwtUri := os.Getenv("JWT_VALIDATION_URI")
 	adminHydraHost := os.Getenv("ADMIN_HYDRA_HOST")
 	ipfsApiServer := os.Getenv("IPFS_API_SERVER_URI")
@@ -67,7 +65,13 @@ func main() {
 
 	}
 
-	app.Listen(":4000")
+	// app.Listen(":4000")
+	//Start server
+	var port string
+	if os.Getenv("PORT_LISTEN") != "" {
+		port = fmt.Sprintf(":%s", os.Getenv("PORT_LISTEN"))
+	}
+	app.Listen(port)
 }
 
 func loadKey() []byte {
@@ -85,7 +89,7 @@ func loadKey() []byte {
 		return key
 	}
 	fmt.Println("Key found, using this key as m master key")
-	hex.Decode(key, encodedKey)
+	hex.Decode(key, encodedKey) // Decode key from hex to bytes
 	return key
 }
 
