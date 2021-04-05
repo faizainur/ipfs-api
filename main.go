@@ -25,11 +25,13 @@ func main() {
 	adminHydraHost := os.Getenv("ADMIN_HYDRA_HOST")
 	ipfsApiServer := os.Getenv("IPFS_API_SERVER_URI")
 	ipfsGateway := os.Getenv("IPFS_GATEWAY_URI")
+	mongoDbUri := os.Getenv("MONGODB_URI")
 
 	fmt.Println("JWT VALIDATION URI = ", jwtUri)
 	fmt.Println("ADMIN HYDRA HOST = ", adminHydraHost)
 	fmt.Println("IPFS API SERVER = ", ipfsApiServer)
 	fmt.Println("IPFS GATEWAY = ", ipfsGateway)
+	fmt.Println("Mongo DB Uri = ", mongoDbUri)
 
 	cryptoService := services.NewCryptoService(loadKey())
 	authService := services.NewAuthService(jwtUri, adminHydraHost)
