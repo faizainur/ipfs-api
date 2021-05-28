@@ -24,13 +24,14 @@ func main() {
 		AllowMethods:     "GET, PUT, POST, OPTIONS",
 	}))
 	app.Use(logger.New())
-	app.Use(middleware)
+	// app.Use(middleware)
 
 	jwtUri := os.Getenv("JWT_VALIDATION_URI")
 	adminHydraHost := os.Getenv("ADMIN_HYDRA_HOST")
 	ipfsApiServer := os.Getenv("IPFS_API_SERVER_URI")
 	ipfsGateway := os.Getenv("IPFS_GATEWAY_URI")
-	mongoDbUri := os.Getenv("MONGODB_URI")
+	mongoDbUri := "mongodb+srv://ipfs:ipfs@dev-catena.yuofs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+	// mongoDbUri := os.Getenv("MONGODB_URI")
 
 	fmt.Println("JWT VALIDATION URI = ", jwtUri)
 	fmt.Println("ADMIN HYDRA HOST = ", adminHydraHost)
@@ -62,7 +63,8 @@ func main() {
 		user := v1.Group("/user")
 		{
 			user.Get("/fetch", authMiddleware.ValidateJwtToken, ipfsMiddleware.FetchFile)
-			user.Post("/upload", authMiddleware.ValidateJwtToken, ipfsMiddleware.UploadFile)
+			// user.Post("/upload", authMiddleware.ValidateJwtToken, ipfsMiddleware.UploadFile)
+			user.Post("/upload",  ipfsMiddleware.UploadFile)
 		}
 
 		bank := v1.Group("/bank")
