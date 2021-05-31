@@ -18,7 +18,7 @@ import (
 func main() {
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://dashboard.catena.id, https://api.catena.id, https://catena.id",
+		AllowOrigins:     "https://dashboard.catena.id, https://api.catena.id, https://catena.id, https://admin.catena.id, https://banka.catena.id, https://bankb.catena.id, http://localhost:8080",
 		AllowCredentials: true,
 		AllowHeaders:     "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With",
 		AllowMethods:     "GET, PUT, POST, OPTIONS",
