@@ -18,7 +18,7 @@ type IpfsMiddleware struct {
 
 func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
 	// email := c.Locals("email").(string)
-	email := c.Query("email")
+	email := c.FormValue("email")
 	form, err := c.MultipartForm()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
