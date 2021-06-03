@@ -50,7 +50,7 @@ func NewCryptoService(secret []byte) *CryptoService {
 	fmt.Println("Connected to Mongo URI")
 
 	dbCrypto := client.Database("crypto")
-	collection := dbCrypto.Collection("secret")
+	collection := dbCrypto.Collection("secret2")
 
 	return &CryptoService{
 		secret:     secret,

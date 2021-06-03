@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -17,44 +18,46 @@ type IpfsMiddleware struct {
 
 func (f *IpfsMiddleware) UploadFile(c *fiber.Ctx) error {
 	// email := c.Locals("email").(string)
-	// form, err := c.MultipartForm()
-	// if err != nil {
-	// 	return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-	// }
-
-	// files := form.File["file"]
-	// dataBuffer := new(bytes.Buffer)
-	// filename := files[0].Filename
-
-	// for _, file := range files {
-	// 	fh, err := file.Open()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	dataBuffer.ReadFrom(fh)
-	// }
-
-	// encryptedFile, err := f.CryptoService.EncryptUserFile(email, dataBuffer.Bytes())
-	// if err != nil {
-	// 	c.SendString(err.Error())
-	// }
-
-	// resp, errUpload := f.IpfsClient.UploadFile(filename, encryptedFile)
-	// if errUpload != nil {
-	// 	return c.Status(fiber.StatusBadRequest).SendString(fmt.Sprintf("%s: %s", "Error", errUpload.Error()))
-	// }
-	
-	key, err := f.CryptoService.GenerateUserKeyWithStoring("john@dow.com")
+	email := c.Query("email")
+	form, err := c.MultipartForm()
 	if err != nil {
-		fmt.Println(err.Error())
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	// return c.Status(fiber.StatusOK).JSON(resp)
-	return c.Status(fiber.StatusOK).Send(key)
+	files := form.File["file"]
+	dataBuffer := new(bytes.Buffer)
+	filename := files[0].Filename
+
+	for _, file := range files {
+		fh, err := file.Open()
+		if err != nil {
+			panic(err)
+		}
+		dataBuffer.ReadFrom(fh)
+	}
+
+	encryptedFile, err := f.CryptoService.EncryptUserFile(email, dataBuffer.Bytes())
+	if err != nil {
+		c.SendString(err.Error())
+	}
+
+	resp, errUpload := f.IpfsClient.UploadFile(filename, encryptedFile)
+	if errUpload != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(fmt.Sprintf("%s: %s", "Error", errUpload.Error()))
+	}
+	return c.Status(fiber.StatusOK).JSON(resp)
+	
+	// key, err := f.CryptoService.GenerateUserKeyWithStoring(email)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+
+	// return c.Status(fiber.StatusOK).Send(key)
 }
 
 func (f *IpfsMiddleware) FetchFile(c *fiber.Ctx) error {
-	email := c.Locals("email").(string)
+	// email := c.Locals("email").(string)
+	email := c.Query("email")
 	cid := c.Query("cid")
 
 	data, err := f.IpfsClient.FetchFile(cid)

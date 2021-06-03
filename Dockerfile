@@ -11,8 +11,6 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /src/app /app
 ENV MONGODB_URI=""
-ENV JWT_VALIDATION_URI=""
-ENV ADMIN_HYDRA_HOST=""
 ENV IPFS_API_SERVER_URI=""
 ENV IPFS_GATEWAY_URI=""
 ENV ENABLE_TLS_VERIFICATION=""

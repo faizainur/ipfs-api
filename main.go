@@ -18,7 +18,7 @@ import (
 func main() {
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://dashboard.catena.id, https://api.catena.id, https://catena.id",
+		AllowOrigins:     "https://dashboard.catena.id, https://api.catena.id, https://catena.id, http://localhost:8080",
 		AllowCredentials: true,
 		AllowHeaders:     "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With",
 		AllowMethods:     "GET, PUT, POST, OPTIONS",
@@ -26,21 +26,16 @@ func main() {
 	app.Use(logger.New())
 	// app.Use(middleware)
 
-	jwtUri := os.Getenv("JWT_VALIDATION_URI")
-	adminHydraHost := os.Getenv("ADMIN_HYDRA_HOST")
 	ipfsApiServer := os.Getenv("IPFS_API_SERVER_URI")
 	ipfsGateway := os.Getenv("IPFS_GATEWAY_URI")
-	mongoDbUri := "mongodb+srv://ipfs:ipfs@dev-catena.yuofs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+	mongoDbUri := "mongodb+srv://imblock:imblock@dev-catena.yuofs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
 	// mongoDbUri := os.Getenv("MONGODB_URI")
 
-	fmt.Println("JWT VALIDATION URI = ", jwtUri)
-	fmt.Println("ADMIN HYDRA HOST = ", adminHydraHost)
 	fmt.Println("IPFS API SERVER = ", ipfsApiServer)
 	fmt.Println("IPFS GATEWAY = ", ipfsGateway)
 	fmt.Println("Mongo DB Uri = ", mongoDbUri)
 
 	cryptoService := services.NewCryptoService(loadKey())
-	authService := services.NewAuthService(jwtUri, adminHydraHost)
 	ipfsClient := ipfs.NewClient(ipfsApiServer, ipfsGateway)
 
 	ipfsMiddleware := middlewares.IpfsMiddleware{
@@ -48,28 +43,18 @@ func main() {
 		CryptoService: cryptoService,
 	}
 
-	authMiddleware := middlewares.AuthMiddleware{
-		AuthService: authService,
-	}
 
 	v1 := app.Group("/api/v1/ipfs")
 	{
 		v1.Get("/ping", ping)
 
 		// Testing endpoint
-		v1.Get("/secure", authMiddleware.ValidateJwtToken, securedEndpoint)
-		v1.Get("/secureOauth", authMiddleware.IntrospectAccessToken, securedEndpoint)
 
 		user := v1.Group("/user")
 		{
-			user.Get("/fetch", authMiddleware.ValidateJwtToken, ipfsMiddleware.FetchFile)
+			user.Get("/fetch",  ipfsMiddleware.FetchFile)
 			// user.Post("/upload", authMiddleware.ValidateJwtToken, ipfsMiddleware.UploadFile)
 			user.Post("/upload",  ipfsMiddleware.UploadFile)
-		}
-
-		bank := v1.Group("/bank")
-		{
-			bank.Get("/fetch", authMiddleware.IntrospectAccessToken, ipfsMiddleware.FetchFile)
 		}
 
 	}
@@ -110,8 +95,8 @@ func ping(c *fiber.Ctx) error {
 	})
 }
 
-func securedEndpoint(c *fiber.Ctx) error {
-	return c.Status(200).JSON(fiber.Map{
-		"email": c.Locals("email"),
-	})
-}
+// func securedEndpoint(c *fiber.Ctx) error {
+// 	return c.Status(200).JSON(fiber.Map{
+// 		"email": c.Locals("email"),
+// 	})
+// }
